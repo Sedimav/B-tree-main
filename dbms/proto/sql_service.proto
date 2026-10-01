@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package dbms.rpc;
+
+message OpenSessionRequest {}
+
+message OpenSessionResponse {
+  bool ok = 1;
+  string session_id = 2;
+  string error = 3;
+}
+
+message ExecuteRequest {
+  string session_id = 1;
+  string sql = 2;
+}
+
+message ExecuteResponse {
+  bool ok = 1;
+  bool is_select = 2;
+  string json = 3;
+  string error = 4;
+}
+
+message CloseSessionRequest {
+  string session_id = 1;
+}
+
+message CloseSessionResponse {
+  bool ok = 1;
+  string error = 2;
+}
+
+service SqlService {
+  rpc OpenSession(OpenSessionRequest) returns (OpenSessionResponse);
+  rpc Execute(ExecuteRequest) returns (ExecuteResponse);
+  rpc CloseSession(CloseSessionRequest) returns (CloseSessionResponse);
+}

@@ -1,0 +1,16 @@
+export DBMS_DATA_ROOT=/home/flow/Documents/vsc/B-tree-67/dbms/demo_data/show
+export DBMS_DATA_ROOT=/tmp/btree67-demo-main-$(date +%s)
+
+./build-clang18/prog
+./build-clang18/prog scripts/demo_point0.sql
+
+grpc:
+
+./build-clang18/dbms_grpc_server 127.0.0.1:50051        "$GRPC_DATA_ROOT"
+
+./build-clang18/dbms_grpc_client 127.0.0.1:50051
+./build-clang18/dbms_grpc_client 127.0.0.1:50051 scripts/demo_grpc.sql
+
+
+ctest --test-dir build-clang18 --output-on-failure
+

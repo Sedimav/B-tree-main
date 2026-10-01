@@ -1,0 +1,28 @@
+# CMake/build outputs
+build/
+build-*/
+cmake-build-*/
+dbms/build/
+dbms/build-*/
+
+# Generated database files
+dbms/data/
+dbms/demo_data/
+*.tbl
+*.idx
+*.log
+
+# Compiler artifacts
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Local/editor files
+.vscode/
+.idea/
+.DS_Store
+__pycache__/
+*.pyc
