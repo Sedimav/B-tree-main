@@ -1,102 +1,40 @@
 # B-tree
 
-Курсовая работа по системному программированию: файловая СУБД на C++ с индексом B-tree.
+Курсовая работа по системному программированию: файловая СУБД на C++ с SQL-подобным языком запросов и индексом на основе B-tree.
 
-Вариант индекса: **B-tree**.  
-Основная реализация находится в папке `dbms`.
+Проект реализует локальную и клиент-серверную работу с базами данных. Таблицы и индексы сохраняются на диске, поэтому данные остаются доступными после завершения программы и повторного запуска.
 
-## Что реализовано
+Основной код находится в папке `dbms`.
 
-Обязательная часть задания:
+## Реализовано
 
-- двухуровневая структура: база данных -> таблицы;
+Обязательная часть:
+
+- создание и удаление баз данных;
+- выбор активной базы через `USE`;
+- создание и удаление таблиц;
 - типы данных `INT`, `STRING`, `NULL`;
-- интерактивный CLI-режим;
-- пакетный CLI-режим через SQL-файл;
-- SQL-подобные команды `CREATE DATABASE`, `DROP DATABASE`, `USE`;
-- команды `CREATE TABLE`, `DROP TABLE`;
-- команды `INSERT`, `SELECT`, `UPDATE`, `DELETE`;
+- ограничения `NOT NULL` и `INDEXED`;
+- вставка, выборка, обновление и удаление строк;
 - условия `WHERE` с операторами `==`, `!=`, `<`, `>`, `<=`, `>=`;
 - `BETWEEN` для диапазонов;
-- `LIKE` для строк через регулярные выражения;
-- ограничения `NOT NULL` и `INDEXED`;
-- автоматическое создание B-tree индекса для `INDEXED` колонок;
-- хранение таблиц и индексов на диске;
-- вывод результата `SELECT` в JSON;
-- синтаксическая и семантическая валидация запросов.
+- `LIKE` для строковых шаблонов;
+- вывод результатов `SELECT` в JSON;
+- хранение таблиц в файлах `.tbl`;
+- хранение индексов B-tree в файлах `.idx`;
+- автоматическое использование индекса для `INDEXED` колонок;
+- интерактивный CLI;
+- запуск SQL-скриптов из файла;
+- тесты для B-tree, SQL, CLI и общего сценария.
 
 Дополнительные задания:
 
-- **3**: клиент-серверная архитектура через gRPC;
-- **7**: Access Logs для запросов к серверу;
-- **8**: Telemetry с RPS, временем обработки и error rate;
-- **10**: значения по умолчанию `DEFAULT`;
-- **11**: составные условия `AND`, `OR`, скобки в `WHERE`;
-- **12**: агрегаты `SUM`, `COUNT`, `AVG`.
-
-## Архитектурная схема
-
-GitHub отображает Mermaid-схемы прямо в Markdown.
-
-```mermaid
-flowchart TD
-    User["Пользователь"]
-    Scripts["SQL-скрипты<br/>scripts/*.sql"]
-
-    Prog["prog<br/>локальный CLI"]
-    GrpcClient["dbms_grpc_client<br/>gRPC клиент"]
-    GrpcServer["dbms_grpc_server<br/>gRPC сервер"]
-    Proto["proto/sql_service.proto<br/>OpenSession / Execute / CloseSession"]
-
-    SqlApi["SqlApi"]
-    Lexer["Lexer"]
-    Parser["Parser"]
-    Executor["Executor"]
-
-    Dbms["Dbms + Catalog"]
-    Table["Table"]
-    Tbl["*.tbl<br/>файлы таблиц"]
-    Idx["*.idx<br/>B-tree индексы"]
-
-    AccessLog["access.log<br/>журнал запросов"]
-    Telemetry["telemetry.log<br/>RPS / latency / error rate"]
-
-    Tests["CTest"]
-
-    User -->|"ручной ввод"| Prog
-    Scripts -->|"пакетный режим"| Prog
-    User -->|"SQL через сеть"| GrpcClient
-    Scripts -->|"gRPC script mode"| GrpcClient
-
-    GrpcClient --> Proto
-    Proto --> GrpcServer
-    GrpcServer --> SqlApi
-    Prog --> SqlApi
-
-    SqlApi --> Lexer
-    Lexer --> Parser
-    Parser --> Executor
-    Executor --> Dbms
-    Dbms --> Table
-    Table --> Tbl
-    Table --> Idx
-
-    GrpcServer --> AccessLog
-    GrpcServer --> Telemetry
-    Tests --> Prog
-    Tests --> GrpcServer
-    Tests --> GrpcClient
-    Tests --> Idx
-```
-
-Коротко по схеме:
-
-- `prog` и `dbms_grpc_server` используют один общий SQL-путь: `SqlApi -> Lexer -> Parser -> Executor`;
-- локальный режим выполняет SQL прямо в процессе `prog`;
-- gRPC-режим передаёт SQL от клиента к серверу через `Execute`;
-- таблицы лежат в бинарных `.tbl`, индексы B-tree лежат в бинарных `.idx`;
-- `access.log` и `telemetry.log` создаются только при работе gRPC-сервера;
-- тесты проверяют B-tree, SQL, CLI и связку gRPC server/client.
+- задание 3: клиент-серверная архитектура через gRPC;
+- задание 7: журнал запросов `access.log`;
+- задание 8: телеметрия `telemetry.log` с RPS, временем обработки и error rate;
+- задание 10: `DEFAULT` значения в `CREATE TABLE`;
+- задание 11: составные условия `AND`, `OR` и скобки в `WHERE`;
+- задание 12: агрегаты `SUM`, `COUNT`, `AVG`.
 
 ## Структура проекта
 
@@ -106,11 +44,11 @@ B-tree/
   dbms/
     CMakeLists.txt
     include/dbms/
-      core/        # Dbms, Catalog, Database, Table, Schema
-      index/       # BTreeDiskIndex, IndexManager, IndexPageManager
+      core/        # Dbms, Database, Table, Schema, Catalog
       storage/     # страницы таблиц, записи, кодирование, .tbl
+      index/       # BTreeDiskIndex, IndexManager, страницы .idx
       sql/         # Lexer, Parser, Executor, SqlApi, CLI
-      grpc/        # gRPC service, logs, telemetry
+      grpc/        # gRPC-сервис, access log, telemetry
     src/
       main.cpp
       sql/
@@ -119,6 +57,7 @@ B-tree/
       sql_service.proto
     scripts/
       demo_point0.sql
+      demo_dops.sql
       demo_constraints_errors.sql
       demo_restart_seed.sql
       demo_restart_check.sql
@@ -128,102 +67,137 @@ B-tree/
       sql/
       spec/
       grpc_smoke_test.sh
-    build-clang18/
-      prog
-      dbms_grpc_server
-      dbms_grpc_client
 ```
+
+После сборки в `dbms/build` появляются:
+
+```text
+prog
+dbms_grpc_server
+dbms_grpc_client
+tests/bin/dbms_tests
+tests/bin/dbms_sql_tests
+tests/bin/dbms_cli_tests
+tests/bin/dbms_all_tests
+```
+
+## Архитектура
+
+```mermaid
+flowchart TD
+    CLI["prog<br/>локальный CLI"]
+    Client["dbms_grpc_client"]
+    Server["dbms_grpc_server"]
+    Proto["proto/sql_service.proto"]
+
+    SqlApi["SqlApi"]
+    Lexer["Lexer"]
+    Parser["Parser"]
+    Executor["Executor"]
+    Dbms["Dbms"]
+    Table["Table"]
+    Storage["*.tbl<br/>таблицы на диске"]
+    Index["*.idx<br/>B-tree индексы на диске"]
+    Logs["access.log<br/>telemetry.log"]
+
+    CLI --> SqlApi
+    Client --> Proto
+    Proto --> Server
+    Server --> SqlApi
+    SqlApi --> Lexer
+    Lexer --> Parser
+    Parser --> Executor
+    Executor --> Dbms
+    Dbms --> Table
+    Table --> Storage
+    Table --> Index
+    Server --> Logs
+```
+
+Обычный CLI и gRPC-сервер используют один общий путь выполнения SQL:
+
+```text
+SqlApi -> Lexer -> Parser -> Executor -> Dbms -> Table -> Storage/Index
+```
+
+Лексер разбивает SQL на токены. Парсер строит внутренние структуры команд. Executor проверяет смысл запроса и выполняет операции над базой данных. Таблица хранит строки в `.tbl`, а для `INDEXED` колонок создаёт и обновляет B-tree индекс в `.idx`.
 
 ## Сборка
 
-Готовая рабочая сборка находится в:
-
-```text
-dbms/build-clang18
-```
-
-Все команды ниже выполняются из папки `dbms`:
+Команды выполняются из папки `dbms`:
 
 ```bash
 cd /Users/sedimav/Desktop/B-tree-main/dbms
 ```
 
-Пересобрать основные программы:
+Настройка CMake:
 
 ```bash
-cmake --build build-clang18 --target dbms dbms_grpc_server dbms_grpc_client -j 4
+GIT_CONFIG_GLOBAL=/dev/null cmake -S . -B build
 ```
 
-Пересобрать программы и тесты:
+`GIT_CONFIG_GLOBAL=/dev/null` нужен на этом компьютере, чтобы зависимости скачивались по `https`, а не через `git@github.com`. Без этого gRPC может не скачаться с ошибкой `Permission denied (publickey)`.
+
+Сборка программ и тестов:
 
 ```bash
-cmake --build build-clang18 --target dbms dbms_tests dbms_sql_tests dbms_cli_tests dbms_all_tests dbms_grpc_server dbms_grpc_client -j 4
+cmake --build build --target dbms dbms_tests dbms_sql_tests dbms_cli_tests dbms_all_tests dbms_grpc_server dbms_grpc_client -j 4
 ```
 
-Если нужно заново настроить CMake для текущей сборки:
+На macOS проект собирается обычным AppleClang из Xcode Command Line Tools. Отдельно указывать другой компилятор не нужно.
+
+## Быстрая проверка
+
+Полный запуск тестов:
 
 ```bash
-cmake -S . -B build-clang18 \
-  -DCMAKE_C_COMPILER=/usr/bin/clang-18 \
-  -DCMAKE_CXX_COMPILER=/usr/bin/clang++-18 \
-  -DFETCHCONTENT_SOURCE_DIR_GRPC="$PWD/build-clang18/_deps/grpc-src" \
-  -DFETCHCONTENT_SOURCE_DIR_GOOGLETEST="$PWD/build-clang18/_deps/googletest-src" \
-  -DFETCHCONTENT_SOURCE_DIR_NLOHMANN_JSON="$PWD/build-clang18/_deps/nlohmann_json-src"
+cd /Users/sedimav/Desktop/B-tree-main/dbms
+ctest --test-dir build --output-on-failure
 ```
 
-В текущей сборке зависимости уже лежат внутри `build-clang18/_deps`, поэтому повторная пересборка не должна заново скачивать gRPC.
-
-## Хранение данных
-
-Файлы данных создаются не рядом с SQL-скриптами, а в `DATA_ROOT`.
-
-Для обычного CLI путь задаётся переменной окружения:
-
-```bash
-export DBMS_DATA_ROOT=/Users/sedimav/Desktop/B-tree-main/dbms/demo_data/show
-```
-
-Если `DBMS_DATA_ROOT` не задан, используется путь по умолчанию:
+Ожидаемый результат:
 
 ```text
-/tmp/coursework_dbms_data
+100% tests passed, 0 tests failed out of 5
 ```
 
-В коде это задано в `include/dbms/core/dbms.h`, функция `Dbms::default_data_root()`.
-
-Для gRPC путь задаётся третьим аргументом при запуске сервера:
+Отдельные тесты:
 
 ```bash
-./build-clang18/dbms_grpc_server 127.0.0.1:50051 /Users/sedimav/Desktop/B-tree-main/dbms/demo_data/grpc_show
+./build/tests/bin/dbms_tests
+./build/tests/bin/dbms_sql_tests
+./build/tests/bin/dbms_cli_tests
+./build/tests/bin/dbms_all_tests
+ctest --test-dir build -R grpc_smoke_test --output-on-failure
 ```
 
-Основные файлы данных:
+Назначение тестов:
 
-- `.tbl` - бинарный файл таблицы;
-- `.idx` - бинарный файл B-tree индекса;
-- `access.log` - текстовый журнал gRPC-запросов;
-- `telemetry.log` - текстовый журнал метрик gRPC-сервера.
+- `dbms_tests` проверяет B-tree индекс;
+- `dbms_sql_tests` проверяет lexer, parser и executor;
+- `dbms_cli_tests` проверяет запуск SQL-скриптов;
+- `dbms_all_tests` проверяет общий сценарий по требованиям;
+- `grpc_smoke_test` проверяет связку gRPC server/client.
 
-Файлы `.tbl` и `.idx` не предназначены для чтения глазами. Их нужно показывать как доказательство дискового хранения, а содержимое демонстрировать через `SELECT`.
-
-## Запуск локального CLI
+## Локальный CLI
 
 Интерактивный режим:
 
 ```bash
 cd /Users/sedimav/Desktop/B-tree-main/dbms
 export DBMS_DATA_ROOT=/tmp/btree-cli-demo
-rm -rf "$DBMS_DATA_ROOT"
-./build-clang18/prog
+./build/prog
 ```
 
-Пример ручных команд:
+Пример команд:
 
 ```sql
 CREATE DATABASE manual_demo;
 USE manual_demo;
 CREATE TABLE users (id INT INDEXED, login STRING INDEXED, age INT NOT NULL, city STRING);
-INSERT INTO users (id, login, age, city) VALUE (1, "alice", 20, "Amsterdam"), (2, "bob", 25, "Paris");
+INSERT INTO users (id, login, age, city) VALUE
+  (1, "alice", 20, "Amsterdam"),
+  (2, "bob", 25, "Paris");
 SELECT * FROM users;
 UPDATE users SET age = 26 WHERE id == 2;
 SELECT id, login, age FROM users WHERE id >= 1;
@@ -232,90 +206,109 @@ SELECT * FROM users;
 quit;
 ```
 
-Команда выполняется только после символа `;`. Если нажать Enter до `;`, программа продолжит ждать ввод и покажет приглашение `...`.
+Команда выполняется после символа `;`. Если строка введена без `;`, программа продолжает ждать продолжение команды.
 
 ## Запуск SQL-скриптов
 
-Основной сценарий:
+Основной сценарий обязательной части:
 
 ```bash
 cd /Users/sedimav/Desktop/B-tree-main/dbms
 export DBMS_DATA_ROOT=/tmp/btree-point0-demo
-rm -rf "$DBMS_DATA_ROOT"
-./build-clang18/prog scripts/demo_point0.sql
+./build/prog scripts/demo_point0.sql
+```
+
+Сценарий дополнительных заданий:
+
+```bash
+export DBMS_DATA_ROOT=/tmp/btree-dops-demo
+./build/prog scripts/demo_dops.sql
 ```
 
 Сценарий ошибок:
 
 ```bash
 export DBMS_DATA_ROOT=/tmp/btree-errors-demo
-rm -rf "$DBMS_DATA_ROOT"
-./build-clang18/prog scripts/demo_constraints_errors.sql
+./build/prog scripts/demo_constraints_errors.sql
 ```
 
-`demo_constraints_errors.sql` специально завершается с кодом `1`, потому что внутри есть ожидаемые ошибки. Это нормальная часть демонстрации.
+`demo_constraints_errors.sql` специально содержит некорректные операции. Если программа выводит ошибки для этого файла, это нормальная часть проверки ограничений.
 
-## Проверка сохранения после перезапуска
+## Хранение на диске
 
-Используется пара скриптов:
+Путь к данным в локальном режиме задаётся переменной:
 
-- `scripts/demo_restart_seed.sql` - создаёт базу, таблицу и данные;
-- `scripts/demo_restart_check.sql` - ничего не создаёт, только читает уже сохранённые данные.
+```bash
+export DBMS_DATA_ROOT=/Users/sedimav/Desktop/B-tree-main/dbms/demo_data/show
+```
 
-Команды:
+Если переменная не задана, используется путь по умолчанию:
+
+```text
+/tmp/coursework_dbms_data
+```
+
+Файлы хранения:
+
+- `.tbl` - бинарный файл таблицы;
+- `.idx` - бинарный файл B-tree индекса;
+- `access.log` - журнал запросов gRPC-сервера;
+- `telemetry.log` - журнал метрик gRPC-сервера.
+
+Файлы `.tbl` и `.idx` являются бинарными. Их не нужно читать вручную как текст. Их наличие показывает, что данные и индексы действительно находятся на диске, а содержимое проверяется через `SELECT`.
+
+## Проверка персистентности
+
+Первый скрипт создаёт базу, таблицу и записи:
 
 ```bash
 cd /Users/sedimav/Desktop/B-tree-main/dbms
 export DBMS_DATA_ROOT=/Users/sedimav/Desktop/B-tree-main/dbms/demo_data/restart_show
-rm -rf "$DBMS_DATA_ROOT"
-
-./build-clang18/prog scripts/demo_restart_seed.sql
-./build-clang18/prog scripts/demo_restart_check.sql
+./build/prog scripts/demo_restart_seed.sql
 ```
 
-После первого запуска можно открыть папку:
+Второй скрипт запускается отдельно и только читает уже сохранённые данные:
+
+```bash
+./build/prog scripts/demo_restart_check.sql
+```
+
+После первого запуска в папке данных должны появиться файлы:
 
 ```text
-dbms/demo_data/restart_show/demo_restart
+demo_restart/accounts.tbl
+demo_restart/accounts__id.idx
+demo_restart/accounts__owner.idx
 ```
 
-Там должны быть файлы:
+Если второй запуск выводит записи `alice`, `bob`, `carol`, значит данные были прочитаны с диска после перезапуска программы.
 
-```text
-accounts.tbl
-accounts__id.idx
-accounts__owner.idx
-```
+## gRPC режим
 
-Во втором скрипте нет `INSERT`, поэтому если он выводит `alice`, `bob`, `carol`, значит данные прочитаны с диска после нового запуска процесса.
+gRPC режим нужен для дополнительного задания 3. Сервер хранит данные и выполняет SQL, клиент отправляет запросы по сети.
 
-## gRPC client/server
-
-gRPC закрывает дополнительное задание 3: основной функционал вынесен в сервер, а клиент отправляет запросы по сети.
-
-Терминал 1, сервер:
+Терминал 1, запуск сервера:
 
 ```bash
 cd /Users/sedimav/Desktop/B-tree-main/dbms
 export GRPC_DATA_ROOT=/Users/sedimav/Desktop/B-tree-main/dbms/demo_data/grpc_show
-rm -rf "$GRPC_DATA_ROOT"
-./build-clang18/dbms_grpc_server 127.0.0.1:50051 "$GRPC_DATA_ROOT"
+./build/dbms_grpc_server 127.0.0.1:50051 "$GRPC_DATA_ROOT"
 ```
 
-Терминал 2, клиент со скриптом:
+Терминал 2, запуск клиента со скриптом:
 
 ```bash
 cd /Users/sedimav/Desktop/B-tree-main/dbms
-./build-clang18/dbms_grpc_client 127.0.0.1:50051 scripts/demo_grpc.sql
+./build/dbms_grpc_client 127.0.0.1:50051 scripts/demo_grpc.sql
 ```
 
 Интерактивный gRPC-клиент:
 
 ```bash
-./build-clang18/dbms_grpc_client 127.0.0.1:50051
+./build/dbms_grpc_client 127.0.0.1:50051
 ```
 
-Пример команд внутри клиента:
+Пример команд:
 
 ```sql
 CREATE DATABASE grpc_manual;
@@ -326,7 +319,7 @@ SELECT id, text FROM messages WHERE id BETWEEN 1 AND 2;
 quit;
 ```
 
-Схема gRPC API описана в:
+Описание сетевого API находится в:
 
 ```text
 dbms/proto/sql_service.proto
@@ -334,56 +327,73 @@ dbms/proto/sql_service.proto
 
 Основные методы:
 
-- `OpenSession` - открыть клиентскую сессию;
-- `Execute` - отправить SQL-запрос;
-- `CloseSession` - закрыть сессию.
+- `OpenSession` открывает клиентскую сессию;
+- `Execute` выполняет SQL-запрос;
+- `CloseSession` закрывает сессию.
 
-После выполнения запросов можно открыть:
+После работы сервера можно проверить:
 
 ```text
 dbms/demo_data/grpc_show/access.log
 dbms/demo_data/grpc_show/telemetry.log
 ```
 
-`access.log` показывает SQL-запросы, пришедшие на сервер.  
-`telemetry.log` показывает RPS, среднее время обработки и error rate.
+`access.log` показывает запросы, которые пришли на сервер.  
+`telemetry.log` показывает RPS, среднее время обработки запроса и долю ошибок.
 
-## Несколько gRPC-клиентов
+## SQL, который поддерживается
 
-Можно открыть несколько терминалов с клиентом:
+DDL:
 
-```bash
-./build-clang18/dbms_grpc_client 127.0.0.1:50051
+```sql
+CREATE DATABASE name;
+DROP DATABASE name;
+USE name;
+CREATE TABLE table_name (...);
+DROP TABLE table_name;
 ```
 
-Каждый клиент получает отдельный `session_id`. В `access.log` это видно по разным значениям `client=...`.
+DML:
 
-SQL-запросы внутри сервера защищены общим `mutex`, поэтому несколько клиентов могут работать одновременно, а сами операции с общей СУБД выполняются безопасно по очереди.
-
-
-## Тесты
-
-Полный запуск тестов:
-
-```bash
-cd /Users/sedimav/Desktop/B-tree-main/dbms
-ctest --test-dir build-clang18 --output-on-failure
+```sql
+INSERT INTO table_name (...) VALUE (...), (...);
+SELECT * FROM table_name WHERE ...;
+UPDATE table_name SET column = value WHERE ...;
+DELETE FROM table_name WHERE ...;
 ```
 
-Запуск тестов по отдельности:
+Ограничения и модификаторы:
 
-```bash
-./build-clang18/tests/bin/dbms_tests
-./build-clang18/tests/bin/dbms_sql_tests
-./build-clang18/tests/bin/dbms_cli_tests
-./build-clang18/tests/bin/dbms_all_tests
-ctest --test-dir build-clang18 -R grpc_smoke_test --output-on-failure
+```sql
+id INT INDEXED
+name STRING NOT NULL
+status STRING DEFAULT "new"
 ```
 
-Что покрывают тесты:
+Условия:
 
-- `dbms_tests` - B-tree индекс;
-- `dbms_sql_tests` - lexer, parser, executor, constraints, WHERE, DEFAULT, агрегаты;
-- `dbms_cli_tests` - пакетный CLI и многострочные команды;
-- `dbms_all_tests` - общий сценарный набор по требованиям;
-- `grpc_smoke_test` - связку server/client.
+```sql
+id == 1
+age BETWEEN 18 AND 25
+login LIKE "a.*"
+(amount >= 100 AND status == "new") OR id == 4
+```
+
+Агрегаты:
+
+```sql
+SELECT COUNT(id), SUM(amount), AVG(amount) FROM orders;
+```
+
+## Что показать на сдаче
+
+1. Собрать проект через `cmake`.
+2. Запустить `ctest --test-dir build --output-on-failure`.
+3. Запустить `scripts/demo_point0.sql` и показать базовые SQL-операции.
+4. Запустить `scripts/demo_dops.sql` и показать дополнительные задания `DEFAULT`, `AND/OR`, агрегаты.
+5. Запустить `demo_restart_seed.sql`, затем `demo_restart_check.sql` и показать, что данные сохранились между запусками.
+6. Открыть папку данных и показать файлы `.tbl` и `.idx`.
+7. Запустить gRPC-сервер и клиент.
+8. Показать `access.log` и `telemetry.log`.
+
+Главная идея проекта: SQL-запрос проходит через lexer, parser и executor, после чего executor работает с файловой СУБД. Таблица хранится в `.tbl`, а индексированные колонки используют B-tree индекс в `.idx`.
