@@ -384,16 +384,4 @@ login LIKE "a.*"
 ```sql
 SELECT COUNT(id), SUM(amount), AVG(amount) FROM orders;
 ```
-
-## Что показать на сдаче
-
-1. Собрать проект через `cmake`.
-2. Запустить `ctest --test-dir build --output-on-failure`.
-3. Запустить `scripts/demo_point0.sql` и показать базовые SQL-операции.
-4. Запустить `scripts/demo_dops.sql` и показать дополнительные задания `DEFAULT`, `AND/OR`, агрегаты.
-5. Запустить `demo_restart_seed.sql`, затем `demo_restart_check.sql` и показать, что данные сохранились между запусками.
-6. Открыть папку данных и показать файлы `.tbl` и `.idx`.
-7. Запустить gRPC-сервер и клиент.
-8. Показать `access.log` и `telemetry.log`.
-
 Главная идея проекта: SQL-запрос проходит через lexer, parser и executor, после чего executor работает с файловой СУБД. Таблица хранится в `.tbl`, а индексированные колонки используют B-tree индекс в `.idx`.
