@@ -144,7 +144,7 @@ GIT_CONFIG_GLOBAL=/dev/null cmake -S . -B build
 cmake --build build --target dbms dbms_tests dbms_sql_tests dbms_cli_tests dbms_all_tests dbms_grpc_server dbms_grpc_client -j 4
 ```
 
-На macOS проект собирается обычным AppleClang из Xcode Command Line Tools. Отдельно указывать другой компилятор не нужно.
+На macOS проект собирается обычным AppleClang из Xcode Command Line Tools.
 
 ## Быстрая проверка
 
