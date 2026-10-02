@@ -1,4 +1,4 @@
-# B-tree-main
+# B-tree
 
 Курсовая работа по системному программированию: файловая СУБД на C++ с индексом B-tree.
 
@@ -101,7 +101,7 @@ flowchart TD
 ## Структура проекта
 
 ```text
-B-tree-67/
+B-tree/
   README.md
   dbms/
     CMakeLists.txt
@@ -145,7 +145,7 @@ dbms/build-clang18
 Все команды ниже выполняются из папки `dbms`:
 
 ```bash
-cd /home/flow/Documents/vsc/B-tree-67/dbms
+cd /Users/sedimav/Desktop/B-tree-main/dbms
 ```
 
 Пересобрать основные программы:
@@ -180,7 +180,7 @@ cmake -S . -B build-clang18 \
 Для обычного CLI путь задаётся переменной окружения:
 
 ```bash
-export DBMS_DATA_ROOT=/home/flow/Documents/vsc/B-tree-67/dbms/demo_data/show
+export DBMS_DATA_ROOT=/Users/sedimav/Desktop/B-tree-main/dbms/demo_data/show
 ```
 
 Если `DBMS_DATA_ROOT` не задан, используется путь по умолчанию:
@@ -194,7 +194,7 @@ export DBMS_DATA_ROOT=/home/flow/Documents/vsc/B-tree-67/dbms/demo_data/show
 Для gRPC путь задаётся третьим аргументом при запуске сервера:
 
 ```bash
-./build-clang18/dbms_grpc_server 127.0.0.1:50051 /home/flow/Documents/vsc/B-tree-67/dbms/demo_data/grpc_show
+./build-clang18/dbms_grpc_server 127.0.0.1:50051 /Users/sedimav/Desktop/B-tree-main/dbms/demo_data/grpc_show
 ```
 
 Основные файлы данных:
@@ -211,8 +211,8 @@ export DBMS_DATA_ROOT=/home/flow/Documents/vsc/B-tree-67/dbms/demo_data/show
 Интерактивный режим:
 
 ```bash
-cd /home/flow/Documents/vsc/B-tree-67/dbms
-export DBMS_DATA_ROOT=/tmp/btree67-cli-demo
+cd /Users/sedimav/Desktop/B-tree-main/dbms
+export DBMS_DATA_ROOT=/tmp/btree-cli-demo
 rm -rf "$DBMS_DATA_ROOT"
 ./build-clang18/prog
 ```
@@ -239,8 +239,8 @@ quit;
 Основной сценарий:
 
 ```bash
-cd /home/flow/Documents/vsc/B-tree-67/dbms
-export DBMS_DATA_ROOT=/tmp/btree67-point0-demo
+cd /Users/sedimav/Desktop/B-tree-main/dbms
+export DBMS_DATA_ROOT=/tmp/btree-point0-demo
 rm -rf "$DBMS_DATA_ROOT"
 ./build-clang18/prog scripts/demo_point0.sql
 ```
@@ -248,7 +248,7 @@ rm -rf "$DBMS_DATA_ROOT"
 Сценарий ошибок:
 
 ```bash
-export DBMS_DATA_ROOT=/tmp/btree67-errors-demo
+export DBMS_DATA_ROOT=/tmp/btree-errors-demo
 rm -rf "$DBMS_DATA_ROOT"
 ./build-clang18/prog scripts/demo_constraints_errors.sql
 ```
@@ -265,8 +265,8 @@ rm -rf "$DBMS_DATA_ROOT"
 Команды:
 
 ```bash
-cd /home/flow/Documents/vsc/B-tree-67/dbms
-export DBMS_DATA_ROOT=/home/flow/Documents/vsc/B-tree-67/dbms/demo_data/restart_show
+cd /Users/sedimav/Desktop/B-tree-main/dbms
+export DBMS_DATA_ROOT=/Users/sedimav/Desktop/B-tree-main/dbms/demo_data/restart_show
 rm -rf "$DBMS_DATA_ROOT"
 
 ./build-clang18/prog scripts/demo_restart_seed.sql
@@ -296,8 +296,8 @@ gRPC закрывает дополнительное задание 3: осно�
 Терминал 1, сервер:
 
 ```bash
-cd /home/flow/Documents/vsc/B-tree-67/dbms
-export GRPC_DATA_ROOT=/home/flow/Documents/vsc/B-tree-67/dbms/demo_data/grpc_show
+cd /Users/sedimav/Desktop/B-tree-main/dbms
+export GRPC_DATA_ROOT=/Users/sedimav/Desktop/B-tree-main/dbms/demo_data/grpc_show
 rm -rf "$GRPC_DATA_ROOT"
 ./build-clang18/dbms_grpc_server 127.0.0.1:50051 "$GRPC_DATA_ROOT"
 ```
@@ -305,7 +305,7 @@ rm -rf "$GRPC_DATA_ROOT"
 Терминал 2, клиент со скриптом:
 
 ```bash
-cd /home/flow/Documents/vsc/B-tree-67/dbms
+cd /Users/sedimav/Desktop/B-tree-main/dbms
 ./build-clang18/dbms_grpc_client 127.0.0.1:50051 scripts/demo_grpc.sql
 ```
 
@@ -366,7 +366,7 @@ SQL-запросы внутри сервера защищены общим `mute
 Полный запуск тестов:
 
 ```bash
-cd /home/flow/Documents/vsc/B-tree-67/dbms
+cd /Users/sedimav/Desktop/B-tree-main/dbms
 ctest --test-dir build-clang18 --output-on-failure
 ```
 
@@ -387,4 +387,3 @@ ctest --test-dir build-clang18 -R grpc_smoke_test --output-on-failure
 - `dbms_cli_tests` - пакетный CLI и многострочные команды;
 - `dbms_all_tests` - общий сценарный набор по требованиям;
 - `grpc_smoke_test` - связку server/client.
-
